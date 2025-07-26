@@ -1,0 +1,33 @@
+<Project>
+    <!-- Specify here the path to ATLYSS's install folder -->
+    <PropertyGroup>
+        <AtlyssPath>D:\SteamLibrary\steamapps\common\ATLYSS\</AtlyssPath>
+    </PropertyGroup>
+
+    <!-- Thunderstore configuration -->
+    <PropertyGroup>
+        <!-- Create a package? -->
+        <CreateThunderstorePackage>true</CreateThunderstorePackage>
+
+        <ThunderstorePackageName>AtlyssDiscordRichPresence</ThunderstorePackageName>
+        <ThunderstoreTeamName>Marioalexsan</ThunderstoreTeamName>
+        <ThunderstorePackageDescription>Adds Discord Rich Presence to ATLYSS.</ThunderstorePackageDescription>
+        <ThunderstoreWebsite>https://github.com/Marioalexsan/AtlyssDiscordRichPresence/</ThunderstoreWebsite>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- Thunderstore dependency strings -->
+        <ThunderstoreDependency Include="BepInEx-BepInExPack-5.4.2100" Visible="false" />
+        <ThunderstoreDependency Include="Nessie-EasySettings-1.1.8" Visible="false" />
+        
+        <!-- Output items to include from build assemblies -->
+        <ThunderstoreAssemblyInclude Include="$(AssemblyName).dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="DiscordRPC.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="Microsoft.Win32.Registry.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="System.Buffers.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="System.Memory.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="System.Numerics.Vectors.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="System.Runtime.CompilerServices.Unsafe.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="System.Security.AccessControl.dll" Visible="false" />
+        <ThunderstoreAssemblyInclude Include="System.Security.Principal.Windows.dll" Visible="false" />
+    </ItemGroup>
+</Project>

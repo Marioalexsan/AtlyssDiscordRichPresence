@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36301.6 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtlyssDiscordRichPresence", "AtlyssDiscordRichPresence/AtlyssDiscordRichPresence.csproj", "{1C32A9F3-31D3-F122-6B95-23645AB9C5BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordRPC", "_Submodules\discord-rpc-csharp\DiscordRPC\DiscordRPC.csproj", "{E827BCB7-2BB0-18A6-767C-E71EB49B81D7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C32A9F3-31D3-F122-6B95-23645AB9C5BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C32A9F3-31D3-F122-6B95-23645AB9C5BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C32A9F3-31D3-F122-6B95-23645AB9C5BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C32A9F3-31D3-F122-6B95-23645AB9C5BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E827BCB7-2BB0-18A6-767C-E71EB49B81D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E827BCB7-2BB0-18A6-767C-E71EB49B81D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E827BCB7-2BB0-18A6-767C-E71EB49B81D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E827BCB7-2BB0-18A6-767C-E71EB49B81D7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {48C6F905-E821-4B4F-8B9E-357B3B187C64}
+	EndGlobalSection
+EndGlobal
