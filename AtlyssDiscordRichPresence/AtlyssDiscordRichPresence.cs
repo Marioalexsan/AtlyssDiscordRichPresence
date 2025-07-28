@@ -2,6 +2,7 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using Marioalexsan.AtlyssDiscordRichPresence.HarmonyPatches;
 using Marioalexsan.AtlyssDiscordRichPresence.SoftDependencies;
 namespace Marioalexsan.AtlyssDiscordRichPresence;
 
@@ -87,30 +88,38 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
 
     private void Update()
     {
-        if (_timeTrackerState == TimerTrackerState.ExploringWorld)
-        {
-            UpdateWorldAreaPresence(Player._mainPlayer, null);
-        }
+        if (!MainMenuManager._current)
+            return;
 
-        if (
-            (bool)AtlyssNetworkManager._current &&
-            !AtlyssNetworkManager._current._soloMode &&
-            !(AtlyssNetworkManager._current._steamworksMode && !SteamManager.Initialized) &&
-            (bool)Player._mainPlayer
-            )
+        if (MainMenuManager._current._mainMenuCondition != MainMenuCondition.In_Game)
         {
-            _state.InMultiplayer = true;
-            _state.Players = FindObjectsOfType<Player>().Length;
-            _state.MaxPlayers = ServerInfoObject._current._maxConnections;
-            _state.ServerName = ServerInfoObject._current._serverName;
-            _state.ServerJoinId = SteamLobby._current._currentLobbyID.ToString();
+            UpdateMainMenuPresence(MainMenuManager._current);
         }
         else
         {
-            _state.InMultiplayer = false;
-            _state.Players = 1;
-            _state.MaxPlayers = 1;
-            _state.ServerJoinId = "";
+            if (
+                (bool)AtlyssNetworkManager._current &&
+                !AtlyssNetworkManager._current._soloMode &&
+                !(AtlyssNetworkManager._current._steamworksMode && !SteamManager.Initialized) &&
+                (bool)Player._mainPlayer
+                )
+            {
+                _state.InMultiplayer = true;
+                _state.Players = FindObjectsOfType<Player>().Length;
+                _state.MaxPlayers = ServerInfoObject._current._maxConnections;
+                _state.ServerName = ServerInfoObject._current._serverName;
+                _state.ServerJoinId = SteamLobby._current._currentLobbyID.ToString();
+            }
+            else
+            {
+                _state.InMultiplayer = false;
+                _state.Players = 1;
+                _state.MaxPlayers = 1;
+                _state.ServerJoinId = "";
+            }
+
+            UpdateWorldAreaPresence(Player._mainPlayer, null);
+            CheckCombatState();
         }
 
         _richPresence.Tick();
@@ -161,20 +170,77 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
         _richPresence.Dispose();
     }
 
-    internal void PatternInstanceManager_Update(PatternInstanceManager self)
+    internal void CheckCombatState()
     {
-        // TODO: Find a better way to get this than music state?
-        bool isBoss = (bool)self._muBossSrc && self._muBossSrc.isPlaying && self._muBossSrc.volume > 0.1f;
-        bool isAction = (bool)self._muActionSrc && self._muActionSrc.isPlaying && self._muActionSrc.volume > 0.1f;
+        _state.InArenaCombat = false;
+        _state.InBossCombat = false;
+        _state.InPostBoss = false;
+        _state.BossName = "";
 
-        _state.InArenaCombat = isAction;
-        _state.InBossCombat = isBoss;
+        if (Player._mainPlayer && Player._mainPlayer._playerMapInstance)
+        {
+            if (Player._mainPlayer._playerMapInstance._patternInstance)
+            {
+                // Dungeon arena stuff
+
+                var inst = Player._mainPlayer._playerMapInstance._patternInstance;
+
+                bool isAction = false;
+
+                for (int i = 0; i < inst._setInstanceCreepArenas.Count; i++)
+                {
+                    var arena = inst._setInstanceCreepArenas[i];
+                    if (arena._arenaEnabled && arena._creepSpawnerObject._playersWithinSpawnerRadius.Contains(Player._mainPlayer))
+                    {
+                        isAction = true;
+                        break;
+                    }
+                }
+
+                bool isBoss = inst._isBossEngaged && inst._bossSpawner && inst._bossSpawner._playersWithinSpawnerRadius.Contains(Player._mainPlayer);
+                bool postBoss = inst._isBossDefeated;
+
+                _state.InArenaCombat = isAction;
+                _state.InBossCombat = isBoss;
+                _state.InPostBoss = postBoss;
+
+                if (inst._bossSpawner && inst._bossSpawner._spawnedCreeps.Count > 0)
+                {
+                    _state.BossName = inst._bossSpawner._spawnedCreeps[0].Network_creepDisplayName;
+                }
+            }
+            else
+            {
+                // World map stuff
+
+                Creep? possibleBossCreep = null;
+
+                for (int i = 0; i < TrackedAggroCreeps.List.Count; i++)
+                {
+                    var creep = TrackedAggroCreeps.List[i];
+
+                    if (creep == null)
+                    {
+                        TrackedAggroCreeps.List.RemoveAt(i--);
+                        continue;
+                    }
+
+                    if (creep._scriptCreep._playMapInstanceActionMusic && creep.Network_aggroedEntity)
+                    {
+                        if (possibleBossCreep == null || creep._creepLevel > possibleBossCreep._creepLevel)
+                            possibleBossCreep = creep;
+                    }
+                }
+
+                if (possibleBossCreep != null)
+                {
+                    _state.InBossCombat = true;
+                    _state.BossName = possibleBossCreep._creepDisplayName;
+                }
+            }
+        }
+
         UpdateWorldAreaPresence(null, null);
-    }
-
-    internal void MainMenuManager_Set_MenuCondition(MainMenuManager self)
-    {
-        UpdateMainMenuPresence(self);
     }
 
     internal void Player_OnPlayerMapInstanceChange(Player self, MapInstance _new)
@@ -189,12 +255,48 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
 
     private void UpdateMainMenuPresence(MainMenuManager manager)
     {
-        UpdatePresence(new()
+        if (manager._mainMenuCondition == MainMenuCondition.CharacterCreation)
         {
-            Details = _display.ReplaceVars(_display.GetText(Display.Texts.MainMenu), _state),
-            LargeImageKey = Assets.ATLYSS_ICON,
-            LargeImageText = "ATLYSS"
-        }, TimerTrackerState.MainMenu);
+            var charManager = manager._characterCreationManager;
+
+            if (!charManager)
+                return;
+
+            var characterName = charManager._characterNameInputField?.text;
+
+            if (string.IsNullOrEmpty(characterName))
+                characterName = "";
+
+            _state.CharacterCreationName = characterName;
+
+            var raceIndex = charManager._currentRaceSelected;
+
+            if (0 <= raceIndex && raceIndex < charManager._raceDisplayModels.Length)
+            {
+                _state.CharacterCreationRace = charManager._raceDisplayModels[raceIndex]?._scriptablePlayerRace?._raceName ?? "";
+            }
+            else
+            {
+                _state.CharacterCreationRace = "";
+            }
+
+            UpdatePresence(new()
+            {
+                Details = _display.GetText(Display.Texts.CharacterCreation, _state),
+                State = _display.GetText(Display.Texts.CharacterCreationDetails, _state),
+                LargeImageKey = Assets.ATLYSS_ICON,
+                LargeImageText = "ATLYSS"
+            }, TimerTrackerState.MainMenu);
+        }
+        else
+        {
+            UpdatePresence(new()
+            {
+                Details = _display.GetText(Display.Texts.MainMenu, _state),
+                LargeImageKey = Assets.ATLYSS_ICON,
+                LargeImageText = "ATLYSS"
+            }, TimerTrackerState.MainMenu);
+        }
     }
 
     private void UpdateWorldAreaPresence(Player? player, MapInstance? area)
@@ -205,31 +307,32 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
         if (area != null)
             _state.UpdateData(area);
 
-        var details = _display.ReplaceVars(_display.GetText(Display.Texts.Exploring), _state);
+        var details = _display.GetText(Display.Texts.Exploring, _state);
 
         if (_state.IsIdle)
-            details = _display.ReplaceVars(_display.GetText(Display.Texts.Idle), _state);
+            details = _display.GetText(Display.Texts.Idle, _state);
 
-        if (_state.InArenaCombat)
-            details = _display.ReplaceVars(_display.GetText(Display.Texts.FightingInArena), _state);
+        if (_state.InPostBoss)
+            details = _display.GetText(Display.Texts.DungeonBossEnd, _state);
 
-        // TODO: This doesn't update correctly in some cases, need to check whenever pattern manager is active in Update()?
-        if (_state.InBossCombat)
-            details = _display.ReplaceVars(_display.GetText(Display.Texts.FightingBoss), _state);
+        else if (_state.InBossCombat)
+            details = _display.GetText(Display.Texts.FightingBoss, _state);
 
-        var state = _display.ReplaceVars(_display.GetText(Display.Texts.PlayerAlive), _state);
+        else if (_state.InArenaCombat)
+            details = _display.GetText(Display.Texts.FightingInArena, _state);
+
+        var state = _display.GetText(Display.Texts.PlayerAlive, _state);
 
         if (_state.HealthPercentage <= 0)
-            state = _display.ReplaceVars(_display.GetText(Display.Texts.PlayerDead), _state);
-
+            state = _display.GetText(Display.Texts.PlayerDead, _state);
 
         UpdatePresence(new()
         {
             Details = details,
             State = state,
             LargeImageKey = !_state.InMultiplayer ? Assets.ATLYSS_SINGLEPLAYER : Assets.ATLYSS_MULTIPLAYER,
-            LargeImageText = !_state.InMultiplayer ? _display.ReplaceVars(_display.GetText(Display.Texts.Singleplayer), _state) : _display.ReplaceVars(_display.GetText(Display.Texts.Multiplayer), _state),
-            SmallImageKey = MapAreaToIcon(_state.WorldArea),
+            LargeImageText = !_state.InMultiplayer ? _display.GetText(Display.Texts.Singleplayer, _state) : _display.GetText(Display.Texts.Multiplayer, _state),
+            SmallImageKey = MapAreaToIcon(_state.WorldAreaType),
             SmallImageText = _state.WorldArea,
             Multiplayer = !_state.InMultiplayer ? null : new ServerData()
             {
@@ -255,39 +358,12 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
         };
     }
 
-    // This doesn't follow the World Portal icons because uhhhhhh reasons
-    private static string MapAreaToIcon(string area) => area.ToLower() switch
+    private static string MapAreaToIcon(ZoneType area) => area switch
     {
-        // map_dungeon00_sanctumCatacoms
-        "sanctum catacombs" => Assets.ZONESELECTIONICON_DUNGEON,
-        // map_dungeon00_crescentGrove
-        "crescent grove" => Assets.ZONESELECTIONICON_DUNGEON,
-
-        // map_pvp_sanctumArena
-        "sanctum arena" => Assets.ZONESELECTIONICON_ARENA,
-        // map_pvp_catacombsArena
-        "executioner's tomb" => Assets.ZONESELECTIONICON_ARENA,
-
-        // map_hub_sanctum
-        "sanctum" => Assets.ZONESELECTIONICON_SAFE,
-        // map_hub_wallOfTheStars
-        "wall of the stars" => Assets.ZONESELECTIONICON_SAFE,
-
-        // map_zone00_outerSanctumGate
-        "outer sanctum gate" => Assets.ZONESELECTIONICON_FIELD,
-        // map_zone00_outerSanctum
-        "outer sanctum" => Assets.ZONESELECTIONICON_FIELD,
-        // map_zone00_effoldTerrace
-        "effold terrace" => Assets.ZONESELECTIONICON_FIELD,
-        // map_zone00_tuulValley
-        "tuul valley" => Assets.ZONESELECTIONICON_FIELD,
-        // map_zone00_woodreach
-        "woodreach pass" => Assets.ZONESELECTIONICON_FIELD,
-        // map_zone00_crescentKeep
-        "crescent keep" => Assets.ZONESELECTIONICON_FIELD,
-        // map_zone00_gateOfTheMoon
-        "gate of the moon" => Assets.ZONESELECTIONICON_FIELD,
-
+        ZoneType.Safe => Assets.ZONESELECTIONICON_SAFE,
+        ZoneType.Field => Assets.ZONESELECTIONICON_FIELD,
+        ZoneType.Dungeon => Assets.ZONESELECTIONICON_DUNGEON,
+        ZoneType.Arena => Assets.ZONESELECTIONICON_ARENA,
         _ => Assets.ZONESELECTIONICON_FIELD
     };
 }

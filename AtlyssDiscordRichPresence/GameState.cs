@@ -36,10 +36,14 @@ public class GameState
             [States.PLAYERRACEANDCLASS] = () => $"{PlayerRace} {PlayerClass}".Trim(),
 
             [States.WORLDAREA] = () => $"{WorldArea}",
+            [States.BOSSNAME] = () => $"{BossName}",
 
             [States.SERVERNAME] = () => $"{ServerName}",
             [States.PLAYERS] = () => $"{Players}",
-            [States.MAXPLAYERS] = () => $"{MaxPlayers}"
+            [States.MAXPLAYERS] = () => $"{MaxPlayers}",
+
+            [States.CHARCREATENAME] = () => $"{CharacterCreationName}",
+            [States.CHARCREATERACE] = () => $"{CharacterCreationRace}",
         };
     }
 
@@ -67,6 +71,8 @@ public class GameState
     public string PlayerClass { get; set; } = "";
 
     public string WorldArea { get; set; } = "";
+    public string BossName { get; set; } = "";
+
     public Vector3 Position { get; set; }
     public Vector3 LastSignificantPosition { get; set; }
     public DateTime LastSignificantPositionUpdate { get; set; } = DateTime.Now;
@@ -74,10 +80,16 @@ public class GameState
 
     public string ServerName { get; set; } = "";
 
+    public string CharacterCreationName { get; set; } = "";
+    public string CharacterCreationRace { get; set; } = "";
+
     // Not configurable / displayable directly
 
     public bool InArenaCombat { get; set; }
     public bool InBossCombat { get; set; }
+    public bool InPostBoss { get; set; }
+
+    public ZoneType WorldAreaType { get; set; } = ZoneType.Safe;
 
     public bool InMultiplayer { get; set; }
     public int Players { get; set; }
@@ -87,6 +99,7 @@ public class GameState
     public void UpdateData(MapInstance area)
     {
         WorldArea = area._mapName;
+        WorldAreaType = area._zoneType;
     }
 
     public void UpdateData(Player player)
@@ -120,7 +133,23 @@ public class GameState
 
         if ((bool)player._pStats._class)
         {
-            PlayerClass = player._pStats._class._className ?? "";
+            var tier = player._pStats.Network_syncClassTier; // 0 = no tier yet, [1; N] = tier selected
+
+            if (tier > 0)
+            {
+                if (tier <= player._pStats._class._playerClassTiers.Length)
+                {
+                    PlayerClass = player._pStats._class._playerClassTiers[tier - 1]._classTierName ?? "";
+                }
+                else
+                {
+                    PlayerClass = "";
+                }
+            }
+            else
+            {
+                PlayerClass = player._pStats._class._className ?? "";
+            }
         }
         else
         {

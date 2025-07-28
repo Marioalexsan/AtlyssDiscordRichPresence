@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-Jul-29
+
+### Added
+
+- Added support for boss names with the `BOSSNAME` variable
+  - Also added boss names to the boss fight state text
+  - Custom presets need to be updated to use the new boss names
+- Added basic support for world map boss fights, such as Slime Diva
+  - Future / modded bosses will be considered as a boss fight if `_playMapInstanceActionMusic` is set to true, and `Network_aggroedEntity` is set to a valid entity
+- Added support for character creation display state
+  - It will show the name and race of the character you're creating using `CHARCREATENAME` and `CHARCREATERACE` variables
+- Added support for a post-dungeon boss state display
+- Added support for class tiers (Paladin, Bishop, Rogue, etc.)
+  - They act as separate classes and will be shown with `PLAYERCLASS`
+- Added three presets
+  - Detailed - same as Default, but shows more player stats by default
+  - DetailedPercentages - same as Detailed, but uses percentage values instead
+  - Pon - same as Default, but player race names are funnier
+
+### Fixed
+
+- Fixed an issue with boss fight state persisting after leaving the dungeon
+- World zone type is now determined based on zone type instead of being hardcoded for each vanilla zone
+  - This should allow modded maps to display their type correctly
+
 ## [1.2.0] - 2025-May-02
 
 ### Added

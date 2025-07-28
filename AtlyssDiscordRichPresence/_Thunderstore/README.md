@@ -6,15 +6,19 @@ Enables Discord Rich Presence support for ATLYSS.
 
 Shows various stats, such as:
 - Your current status (in menu, exploring a zone, etc.)
-- Your character
-- Your character's current state
-- Whenever you're in singleplayer or multiplayer
+  - Main menu
+  - Character creation
+  - World areas
+  - Fights in dungeons
+  - Boss fights (including world bosses such as Slime Diva)
+- Your character and their current state
+- Whenever you're in singleplayer or multiplayer, and details of the server
 - Elapsed playtime
 
 Also allows you to:
 - Customize the texts displayed by the integration, and select between available presets
-- Send invites for the ATLYSS server you're in to people who also have the mod (while the game is open)
-- Have people who also have the mod be able to join your ATLYSS server (while the game is open)
+- Send invites for the ATLYSS server you're in to people who also have the mod (important: works only while the game is open!)
+- Have people who also have the mod be able to join your ATLYSS server (important: works only while the game is open!)
 
 # Configuration
 
@@ -41,11 +45,14 @@ The available variables are as follows:
 - `PLAYERCLASS` - Player class ("Novice", "Fighter", etc.)
 - `PLAYERRACEANDCLASS` - Displays both race and class together ("Poon Novice", etc.)
 - `WORLDAREA` - Current world area ("Sanctum", etc.)
+- `BOSSNAME` - Current boss name ("Lord Kaluuz", etc.)
 - `SERVERNAME` - The server you're playing on
 - `PLAYERS` - The number of players in the server you're on
 - `MAXPLAYERS` - The maximum number of players in the server you're on
+- `CHARCREATENAME` - The name of the current character in the Character Creation screen
+- `CHARCREATERACE` - The race of the current character in the Character Creation screen
 
-You can also further configure how player races (PLAYERRACE) and player classes (PLAYERCLASS) are displayed by configuring variables such as `RacePoon`
+You can also further configure how player races (PLAYERRACE) and player classes (PLAYERCLASS) are displayed by configuring variables such as `RacePoon`.
 
 # Linux Compatibility
 
@@ -63,12 +70,14 @@ You will also have to make `bridge.sh` executable by opening a terminal in the c
 chmod +x bridge.sh
 ```
 
+Also, keep in mind that support for inviting and joining ATLYSS servers via Discord on Linux is extremely limited (if nonexistent).
+
 # Mod Compatibility
 
 AtlyssDiscordRichPresence targets the following game versions and mods:
 
-- ATLYSS v1.6.2b
-- Nessie's EasySettings v1.1.3 (optional dependency used for configuration)
+- ATLYSS 72025.a8
+- Nessie's EasySettings 1.1.8 (optional dependency used for configuration)
 
 Compatibility with other game versions and mods is not guaranteed, especially for updates with major changes.
 
