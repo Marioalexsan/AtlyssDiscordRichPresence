@@ -1,9 +1,11 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using DiscordRPC.Registry;
 using HarmonyLib;
 using Marioalexsan.AtlyssDiscordRichPresence.HarmonyPatches;
 using Marioalexsan.AtlyssDiscordRichPresence.SoftDependencies;
+using Steamworks;
 namespace Marioalexsan.AtlyssDiscordRichPresence;
 
 [BepInPlugin(ModInfo.GUID, ModInfo.NAME, ModInfo.VERSION)]
@@ -38,6 +40,9 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
     public ConfigEntry<string> DiscordAppId { get; private set; }
     public ConfigEntry<RichPresenceWrapper.LogLevels> DiscordRPCLogLevel { get; private set; }
 
+    // Used to join a lobby as soon as we're ready for it
+    private ulong? QueuedSteamLobbyId;
+
     public AtlyssDiscordRichPresence()
     {
         _plugin = this;
@@ -52,6 +57,18 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
 
         _richPresence = new(DiscordAppId.Value, Logger, DiscordRPCLogLevel.Value);
         _richPresence.OnJoin += OnJoinLobby;
+
+        if (WineDetect.IsRunningInWine)
+        {
+            Logging.LogInfo("Wine detected!");
+            Logging.LogInfo($"Wine version: {WineDetect.WineVersion}");
+            Logging.LogInfo($"System name: {WineDetect.SystemName}");
+            Logging.LogInfo($"System version: {WineDetect.SystemVersion}");
+        }
+        else
+        {
+            Logging.LogInfo("Wine not detected!");
+        }
     }
 
     private void OnJoinLobby(object sender, RichPresenceWrapper.JoinData e)
@@ -69,7 +86,7 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
             return;
         }
 
-        SteamLobby._current.Init_LobbyJoinRequest(new Steamworks.CSteamID(steamId));
+        QueuedSteamLobbyId = steamId;
     }
 
     private enum TimerTrackerState
@@ -90,6 +107,14 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
     {
         if (!MainMenuManager._current)
             return;
+
+        if (QueuedSteamLobbyId.HasValue)
+        {
+            var lobbyId = QueuedSteamLobbyId.Value;
+            QueuedSteamLobbyId = null;
+
+            SteamLobby._current.Init_LobbyJoinRequest(new Steamworks.CSteamID(lobbyId));
+        }
 
         if (MainMenuManager._current._mainMenuCondition != MainMenuCondition.In_Game)
         {

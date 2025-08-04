@@ -17,8 +17,8 @@ Shows various stats, such as:
 
 Also allows you to:
 - Customize the texts displayed by the integration, and select between available presets
-- Send invites for the ATLYSS server you're in to people who also have the mod (important: works only while the game is open!)
-- Have people who also have the mod be able to join your ATLYSS server (important: works only while the game is open!)
+- Send invites for the ATLYSS server you're in to people who also have the mod (either by launching or joining while in-game)
+- Have people who also have the mod be able to join your ATLYSS server (either by launching or joining while in-game)
 
 # Configuration
 
@@ -70,7 +70,9 @@ You will also have to make `bridge.sh` executable by opening a terminal in the c
 chmod +x bridge.sh
 ```
 
-Also, keep in mind that support for inviting and joining ATLYSS servers via Discord on Linux is extremely limited (if nonexistent).
+Support for launching Atlyss and joining servers via "Join Game" is experimental due to requiring workarounds for Proton. Some things to keep in mind:
+- The mod will create an entry under `~/.local/share/applications/discord-{AppId}.desktop` to store a launch option. This is likely going to appear as "Atlyss" in your desktop environment's application menu.
+- The mod will backup your `~/.config/mimeapps.list` configuration into `~/.config/mimeapps.list.atlyssbackup`, then manually edit it to include the necessary MIME associations for Discord to be able to launch the game
 
 # Mod Compatibility
 
@@ -80,6 +82,10 @@ AtlyssDiscordRichPresence targets the following game versions and mods:
 - Nessie's EasySettings 1.1.8 (optional dependency used for configuration)
 
 Compatibility with other game versions and mods is not guaranteed, especially for updates with major changes.
+
+# Notes
+
+- When changing your BepInEx install path (for example by switching r2modman profiles), or changing your game install path, you have to relaunch the modded game outside of Discord so that its launch information is updated correctly
 
 # Gallery
 

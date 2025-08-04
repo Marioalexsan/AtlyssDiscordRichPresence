@@ -2,6 +2,8 @@
 using BepInEx.Logging;
 using DiscordRPC;
 using DiscordRPC.Logging;
+using DiscordRPC.Registry;
+using Microsoft.Win32;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -103,7 +105,7 @@ public class RichPresenceWrapper : IDisposable
 
         _lastUpdate = DateTime.UtcNow;
 
-        _client = new DiscordRpcClient(discordAppId, -1, _logger, false, null);
+        _client = new DiscordRpcClient(discordAppId, -1, _logger, true, null);
 
         _client.OnReady += (sender, e) =>
         {
@@ -133,11 +135,48 @@ public class RichPresenceWrapper : IDisposable
             _logger.Info($"Got a join request event.");
         };
 
-        _client.RegisterUriScheme(steamAppID: AtlyssSteamAppId);
+        RegisterGameLaunchURI();
         _client.SetSubscription(EventType.Join | EventType.JoinRequest);
         _client.Initialize();
     }
 
+    private void RegisterGameLaunchURI()
+    {
+        var bepinexPreloaderPath = Path.Combine(Paths.BepInExAssemblyDirectory, "BepInEx.Preloader.dll");
+
+        if (WineDetect.IsRunningInWine && WineDetect.SystemName == "Linux")
+        {
+            // Bypass Proton's bullshit and register URI scheme for Linux forcefully
+            Logging.LogInfo("Setting up Discord launch options (Linux w/Proton).");
+
+            var steamFolder = Environment.GetEnvironmentVariable("STEAM_BASE_FOLDER"); // This should come without the Z:/ bullshit from Wine
+
+            if (string.IsNullOrEmpty(steamFolder))
+            {
+                Logging.LogWarning("Couldn't find Steam install, won't register launch parameters.");
+                return;
+            }
+
+            var steamExec = Path.Combine(steamFolder, "steam.sh");
+
+            var creator = new ProtonUnixUriSchemeCreator(_logger);
+            var uriScheme = $"{steamExec} -applaunch {AtlyssSteamAppId} --doorstop-enable true --doorstop-target \"{bepinexPreloaderPath}\"";
+
+            var scheme = new UriSchemeRegister(_logger, _client.ApplicationID, executable: uriScheme);
+            _client.HasRegisteredUriScheme = creator.RegisterUriScheme(scheme);
+        }
+        else
+        {
+            // Also register scheme explicitly here since we'll use the executable path directly
+            Logging.LogInfo("Setting up Discord launch options (Windows).");
+            var creator = new WindowsUriSchemeCreator(_logger);
+
+            var uriScheme = $"\"{Paths.ExecutablePath}\" -applaunch {AtlyssSteamAppId} --doorstop-enable true --doorstop-target \"{bepinexPreloaderPath}\"";
+
+            var scheme = new UriSchemeRegister(_logger, _client.ApplicationID, executable: uriScheme);
+            _client.HasRegisteredUriScheme = creator.RegisterUriScheme(scheme);
+        }
+    }
     public void SetPresence(PresenceData data, bool resetTimer = false)
     {
         _presence.State = data.State;
@@ -187,9 +226,6 @@ public class RichPresenceWrapper : IDisposable
             // Sending null clears the current presence
             _client.SetPresence(Enabled ? _presence : null);
         }
-
-        if (!_client.AutoEvents)
-            _client.Invoke();
     }
 
     public void Dispose()

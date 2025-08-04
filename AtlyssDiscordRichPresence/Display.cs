@@ -63,7 +63,7 @@ public class Display
     {
         void RegisterCustomPresetText(Texts text, string description)
         {
-            config.Bind("Display", text.ToString(), GetDefaultPresetText(text), description);
+            _customPresetData[text] = config.Bind("Display", text.ToString(), GetDefaultPresetText(text), description);
         }
 
         DisplayPreset = config.Bind("General", nameof(DisplayPreset), DisplayPresets.Custom, "Preset to use for texts. \"Custom\" will use the custom texts defined in the config.");

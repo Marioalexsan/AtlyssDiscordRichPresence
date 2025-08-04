@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-Aug-04
+
+### Added
+
+- The mod now supports launching modded Atlyss from the "Join Game" button in Discord. You will be sent to the character selection / server join screen as soon as the main menu is loaded.
+  - Previously it only supported joining games while the game was already open
+  - You will need to launch Atlyss using this mod at least once for Discord to be able to launch it by itself afterward
+  - If you change your BepInEx installation path (using r2modman profiles), you will need to launch the game at least once for Discord to receive the updated profile information
+  - On Windows, this is implemented using a Registry key
+  - On Linux, this is implemented using `xdg-mime` + `.desktop` entries. Additionally, your old `~/.config/mimeapps.list` is backed up under `~/.config/mimeapps.list.atlyssbackup`
+
+### Fixed
+
+- Fixed an issue introduced by v1.3.0 where the custom preset wouldn't work properly
+
 ## [1.3.0] - 2025-Jul-29
 
 ### Added
