@@ -8,7 +8,7 @@
         <Product>AtlyssDiscordRichPresence</Product>
 
         <!-- Also set as plugin version and Thunderstore package version -->
-        <Version>1.4.0</Version>
+        <Version>1.4.1</Version>
     </PropertyGroup>
 
     <!-- Generic assembly info. -->
@@ -46,6 +46,9 @@
         <Reference Include="$(AtlyssManaged)Mirror.dll" Private="False" />
         <Reference Include="$(AtlyssManaged)com.rlabrecque.steamworks.net.dll" Private="False" />
 
+        
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+            
         <PackageReference Include="Nessie-EasySettings" Version="1.1.8" Private="False" />
     </ItemGroup>
 </Project>

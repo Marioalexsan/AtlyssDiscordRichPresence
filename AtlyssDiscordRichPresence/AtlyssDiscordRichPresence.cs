@@ -240,17 +240,9 @@ public class AtlyssDiscordRichPresence : BaseUnityPlugin
 
                 Creep? possibleBossCreep = null;
 
-                for (int i = 0; i < TrackedAggroCreeps.List.Count; i++)
+                foreach (var creep in TrackedAggroCreeps.Creeps)
                 {
-                    var creep = TrackedAggroCreeps.List[i];
-
-                    if (creep == null)
-                    {
-                        TrackedAggroCreeps.List.RemoveAt(i--);
-                        continue;
-                    }
-
-                    if (creep._scriptCreep._playMapInstanceActionMusic && creep.Network_aggroedEntity)
+                    if (creep != null && creep.Network_aggroedEntity && creep._scriptCreep._playMapInstanceActionMusic)
                     {
                         if (possibleBossCreep == null || creep._creepLevel > possibleBossCreep._creepLevel)
                             possibleBossCreep = creep;

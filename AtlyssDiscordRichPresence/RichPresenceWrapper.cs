@@ -42,6 +42,7 @@ public class RichPresenceWrapper : IDisposable
     private DateTime _lastUpdate;
     private PresenceData _presenceData;
     private bool _shouldSendPresence = false;
+    private bool _lastConnectionState = false;
 
     // Rate limit on our side in case values for stuff like HP, SP, etc. change rapidly
     // This makes updates slow, but consistent (otherwise they would be fast but then get rate limited by Discord)
@@ -119,6 +120,24 @@ public class RichPresenceWrapper : IDisposable
         _client.OnClose += (sender, e) =>
         {
             _logger.Info($"DiscordRpcClient deinitialized.");
+        };
+
+        _client.OnConnectionEstablished += (sender, e) =>
+        {
+            if (_lastConnectionState)
+                return;
+
+            _lastConnectionState = true;
+            _logger.Info("Connected to Discord!");
+        };
+
+        _client.OnConnectionFailed += (sender, e) =>
+        {
+            if (!_lastConnectionState)
+                return;
+
+            _lastConnectionState = false;
+            _logger.Info("Disconnected from Discord! Either the connection got closed, Rich Presence visibility got changed in settings, or an issue occurred!");
         };
 
         _client.OnJoin += (sender, e) =>

@@ -10,12 +10,15 @@ static class Creep_Handle_AggroedNetObj
 
     static void Prefix(Creep __instance)
     {
-        if (__instance)
-            TrackedAggroCreeps.List.Add(__instance);
+        if (__instance && __instance.Network_aggroedEntity)
+        {
+            TrackedAggroCreeps.Creeps.RemoveWhere(x => x == null || x.Network_aggroedEntity == null);
+            TrackedAggroCreeps.Creeps.Add(__instance);
+        }
     }
 }
 
 public static class TrackedAggroCreeps
 {
-    public static List<Creep> List { get; } = [];
+    public static HashSet<Creep> Creeps { get; } = [];
 }
